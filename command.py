@@ -79,6 +79,7 @@ class CreateConsumer:
         self._consumer = PushConsumer(group)
         self._consumer.set_name_server_address(nameserver)
         self._consumer.subscribe(topic,self._callback)
+        self._consumer.start()
 
         return self._consumer
 
