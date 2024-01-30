@@ -1,7 +1,7 @@
 #*coding=utf-8
 from __future__ import annotations
 import os
-import consumer
+import logging
 from abc import ABC,abstractmethod
 from rocketmq.client import Producer,Message,PushConsumer,ConsumeStatus
 
@@ -71,8 +71,15 @@ class CreateConsumerCommand(Command):
 #创建consumer的具体实现
 class CreateConsumer:
     def _callback(self,msg):
-        print("Hello world")
-        print(msg.id,msg.body,msg.get_property('property'))
+        if not os.path.exists('./consumerLogging'):
+            open('./consumerLogging',"x")
+        else:
+            open('./consumerLogging',"w")
+
+        logging.basicConfig(filename="./consumerLogging",level=logging.DEBUG)
+        #logging.debug(msg.id,msg.body,msg.get_property('property'))
+        logging.debug(msg.id)
+        logging.debug(msg.body)
         return ConsumeStatus.CONSUME_SUCCESS
 
     def create(self,group:str,nameserver:str,topic:str) -> None:
@@ -82,7 +89,6 @@ class CreateConsumer:
         self._consumer.start()
 
         return self._consumer
-
 
 class Invoker:
     _command = None
