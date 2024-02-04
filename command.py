@@ -71,15 +71,13 @@ class CreateConsumerCommand(Command):
 #创建consumer的具体实现
 class CreateConsumer:
     def _callback(self,msg):
-        if not os.path.exists('./consumerLogging'):
-            open('./consumerLogging',"x")
+        if not os.path.exists('./consumelogging'):
+            open('./consumelogging','x')
         else:
-            open('./consumerLogging',"w")
+            logging.basicConfig(filename='./consumelogging',level = logging.INFO,format= '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            logger = logging.getLogger(__name__)
+            logger.info(str(msg.id)+":"+str(msg.body))
 
-        logging.basicConfig(filename="./consumerLogging",level=logging.DEBUG)
-        #logging.debug(msg.id,msg.body,msg.get_property('property'))
-        logging.debug(msg.id)
-        logging.debug(msg.body)
         return ConsumeStatus.CONSUME_SUCCESS
 
     def create(self,group:str,nameserver:str,topic:str) -> None:
@@ -87,6 +85,35 @@ class CreateConsumer:
         self._consumer.set_name_server_address(nameserver)
         self._consumer.subscribe(topic,self._callback)
         self._consumer.start()
+
+        return self._consumer
+
+class CreatePullConsumerCommand(Command):
+    def __init__(self,createconsumer:CreateConsumer,group:str,nameserver:str,topic:str)->None:
+        self._createconsumer=createconsumer
+        self._group = group
+        self._namesrv = nameserver
+        self._topic = topic
+
+    def execute(self) -> None:
+        return self._createconsumer.create(self._group,self._namesrv,self._topic)
+
+#创建 pull consumer的具体实现
+class CreatePullConsumer:
+    def create(self,group:str,nameserver:str,topic:str) -> None:
+        self._consumer = PullConsumer(group)
+        self._consumer.set_name_server_address(nameserver)
+        self._consumer.subscribe(topic,self._callback)
+        self._consumer.start()
+
+        for msg in consumer.pull(topic):
+            if not os.path.exists('./consumelogging'):
+                open('./consumelogging','x')
+            else:
+                logging.basicConfig(filename='./consumelogging',level = logging.INFO,format= '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+                logger = logging.getLogger(__name__)
+                logger.info(str(msg.id)+":"+str(msg.body))
 
         return self._consumer
 
